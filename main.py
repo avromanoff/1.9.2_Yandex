@@ -1,4 +1,5 @@
 import requests
+import os
 from pprint import pprint
 
 
@@ -11,47 +12,36 @@ from pprint import pprint
 #     Загрузка файла по ссылке происходит с помощью метода put и передачи туда данных;
 #     Токен можно получить кликнув на полигоне на кнопку "Получить OAuth-токен".
 #
-# HOST: https://cloud-api.yandex.net:443
-# Token: my-token
-# ID: my-ID
-# Пароль: my-password
-token = 'my-token'
 
-class YaUploader:
-    def __init__(self, token):
-        self.token = token
-
-    def get_headers(self):
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': 'OAuth{}.format(self.token)'
-        }
-
-    def _get_upload_link(self, file_path):
-        upload_url = "https://cloud-api.yandex.net:443/v1/disk/resourses/upload"
-        headers = self.get_headers()
-        params = {"path": file_path, "overwrite": "true"}
-        response = requests.get(upload_url, headers=headers, params=params)
-        pprint(response.json()) # удалить, смотрю результат запроса пути
-        return response.json()
-
-    def upload(self, file_path, filename):
-        """Метод загружает файл file_path на яндекс диск"""
-        # Тут ваша логика
-        href = self._get_upload_link(file_path=file_path).get("href", "")
-        response = requests.put(href, data=open(filename, 'rb'))
-        response.raise_for_status()
-        if response.status_code == 201:
-            print('Success')
-        # with open ("C:\test\test.txt", 'rb') as f:
-        #     resp = requests.post('ya.ru', files={"file": f})
-        return 'Вернуть ответ об успешной загрузке'
+TOKEN = 'AAAAAAA'
 
 
-if __name__ == '__main__':
-    uploader = YaUploader('my-token')
-    # result = uploader.upload("c:\my_folder\file.txt")
-    # pprint(YaUploader.upload(r"c:\my_folder\file.txt", "file.txt"))
-    print(uploader.upload('file.txt', r"c:\my_folder\file.txt"))
+def get_headers():
+    return {
+        'Accept': 'application/json',
+        'Authorization': TOKEN
+    }
 
 
+def get_upload_link():
+    upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
+    filename = '/' + os.path.basename(file_path)
+    params = {'path': filename, 'overwrite': 'true'}
+    response = requests.get(upload_url, params=params, headers=get_headers())
+    upload_link = response.json().get('href')
+    return upload_link
+
+
+def upload(file_path):
+    """Функция загружает файл file_path на яндекс диск"""
+    files = {'file': open(file_path, 'rb')}
+    headers = get_headers()
+    response = requests.put(get_upload_link(), files=files, headers=headers)
+    response.raise_for_status()
+    if response.status_code == 201:
+        print('Файл загружен на Я.Диск')
+    return 'Файл загружен'
+
+
+file_path = r'c:\my_folder\file.txt'
+upload(file_path)
